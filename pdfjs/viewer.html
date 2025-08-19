@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>PDF.js Minimal Viewer</title>
-  <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.mjs" type="module"></script>
+  <title>PDF.js Simple Viewer</title>
+  <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.js"></script>
   <style>
     body { margin:0; }
     #pdf-canvas { width:100%; height:100vh; }
@@ -12,24 +12,19 @@
 <body>
   <canvas id="pdf-canvas"></canvas>
 
-  <script type="module">
-    import * as pdfjsLib from "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.mjs";
-
-    // Point to worker
+  <script>
+    // Tell PDF.js where the worker is
     pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.mjs";
+      "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.js";
 
-   // Read ?file= parameter
-const urlParams = new URLSearchParams(window.location.search);
-const fileParam = urlParams.get("file") || "2023-Trails-Book-Web-Version-reduced.pdf";
-const file = decodeURIComponent(fileParam);  // <-- important fix
-
-
-    // Read #page= parameter
+    // Get ?file= and #page= params
+    const urlParams = new URLSearchParams(window.location.search);
+    const fileParam = urlParams.get("file") || "2023-Trails-Book-Web-Version-reduced.pdf";
+    const file = decodeURIComponent(fileParam);
     const pageParam = window.location.hash.replace("#page=", "");
     const pageNumber = parseInt(pageParam) || 1;
 
-    // Render
+    // Load and render
     const canvas = document.getElementById("pdf-canvas");
     const ctx = canvas.getContext("2d");
 
