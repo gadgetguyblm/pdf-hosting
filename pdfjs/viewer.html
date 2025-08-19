@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>PDF.js Viewer with Zoom + Page Nav</title>
-  <script src="../build/pdf.js"></script>
+  <title>PDF.js Viewer</title>
+  <script src="build/pdf.js"></script>
   <style>
     html, body {
       margin: 0;
@@ -34,6 +34,10 @@
     #controls button:hover {
       background: #777;
     }
+    #page-info {
+      color: white;
+      margin-left: 10px;
+    }
     #pdf-canvas {
       display: block;
       background: #fff;
@@ -52,5 +56,30 @@
     <button onclick="resetZoom()">Reset</button>
     <button onclick="zoomIn()">+</button>
     <button onclick="nextPage()">Next</button>
-    <span id="page-info" style="color:white;margin-left:10px;"></span>
-  </
+    <span id="page-info"></span>
+  </div>
+  <canvas id="pdf-canvas"></canvas>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "build/pdf.worker.js";
+
+    const file = "../2023-Trails-Book-Web-Version-reduced.pdf";
+    let pdfDoc = null;
+    let currentPage = 1;
+    let currentScale = 1.0;
+
+    const canvas = document.getElementById("pdf-canvas");
+    const ctx = canvas.getContext("2d");
+    const pageInfo = document.getElementById("page-info");
+
+    function renderPage(pageNum) {
+      pdfDoc.getPage(pageNum).then(page => {
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+        const containerWidth = window.innerWidth * 0.95;
+
+        let baseScale = containerWidth / unscaledViewport.width;
+        if (!isFinite(baseScale) || baseScale <= 0) {
+          baseScale = 1.0;
+        }
+
+        const finalScale = baseSc
