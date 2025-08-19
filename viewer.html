@@ -2,35 +2,75 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>PDF.js Minimal Viewer</title>
+    <title>PDF.js Viewer with Controls</title>
     <script src="build/pdf.js"></script>
     <style>
-      body { margin: 0; background: #333; display: flex; justify-content: center; }
-      canvas { margin: 20px auto; border: 1px solid #ccc; }
+      body { margin: 0; background: #333; display: flex; flex-direction: column; align-items: center; color: white; }
+      #controls { margin: 10px; }
+      button { margin: 0 5px; padding: 5px 10px; }
+      canvas { border: 1px solid #ccc; margin: 10px; background: white; }
     </style>
   </head>
   <body>
+    <div id="controls">
+      <button onclick="prevPage()">⬅ Prev</button>
+      <button onclick="nextPage()">Next ➡</button>
+      <button onclick="zoomOut()">➖ Zoom Out</button>
+      <button onclick="zoomIn()">➕ Zoom In</button>
+      <span id="page-info"></span>
+    </div>
     <canvas id="the-canvas"></canvas>
+
     <script>
-      // worker path
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'build/pdf.worker.js';
 
-      // get page number from URL hash (#page=n)
       const url = '2023-Trails-Book-Web-Version-reduced.pdf';
-      const pageParam = parseInt(window.location.hash.replace("#page=", "")) || 1;
+      let pdfDoc = null,
+          pageNum = parseInt(window.location.hash.replace("#page=", "")) || 1,
+          scale = 1.0,
+          canvas = document.getElementById('the-canvas'),
+          ctx = canvas.getContext('2d');
 
-      const loadingTask = pdfjsLib.getDocument(url);
-      loadingTask.promise.then(pdf => {
-        pdf.getPage(pageParam).then(page => {
-          const viewport = page.getViewport({ scale: 1.2 });
-          const canvas = document.getElementById('the-canvas');
-          const context = canvas.getContext('2d');
+      function renderPage(num) {
+        pdfDoc.getPage(num).then(page => {
+          const viewport = page.getViewport({ scale: scale });
           canvas.height = viewport.height;
           canvas.width = viewport.width;
 
-          const renderContext = { canvasContext: context, viewport: viewport };
+          const renderContext = { canvasContext: ctx, viewport: viewport };
           page.render(renderContext);
+
+          document.getElementById('page-info').textContent = 
+            `Page ${num} of ${pdfDoc.numPages}`;
         });
+      }
+
+      function prevPage() {
+        if (pageNum <= 1) return;
+        pageNum--;
+        renderPage(pageNum);
+      }
+
+      function nextPage() {
+        if (pageNum >= pdfDoc.numPages) return;
+        pageNum++;
+        renderPage(pageNum);
+      }
+
+      function zoomIn() {
+        scale += 0.2;
+        renderPage(pageNum);
+      }
+
+      function zoomOut() {
+        if (scale <= 0.4) return;
+        scale -= 0.2;
+        renderPage(pageNum);
+      }
+
+      pdfjsLib.getDocument(url).promise.then(pdf => {
+        pdfDoc = pdf;
+        renderPage(pageNum);
       });
     </script>
   </body>
