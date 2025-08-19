@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <title>PDF.js Viewer</title>
-  <script src="build/pdf.js"></script>
+  <!-- ✅ Absolute URL to pdf.js -->
+  <script src="https://gadgetguyblm.github.io/pdf-hosting/pdfjs/build/pdf.js"></script>
   <style>
     html, body {
       margin: 0;
@@ -61,7 +62,8 @@
   <canvas id="pdf-canvas"></canvas>
 
   <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "build/pdf.worker.js";
+    // ✅ Absolute URL to worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://gadgetguyblm.github.io/pdf-hosting/pdfjs/build/pdf.worker.js";
 
     // ✅ Absolute URL to your PDF
     const file = "https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf";
@@ -72,86 +74,4 @@
 
     const canvas = document.getElementById("pdf-canvas");
     const ctx = canvas.getContext("2d");
-    const pageInfo = document.getElementById("page-info");
-
-    function renderPage(pageNum) {
-      pdfDoc.getPage(pageNum).then(page => {
-        const unscaledViewport = page.getViewport({ scale: 1.0 });
-        const containerWidth = window.innerWidth * 0.95;
-
-        let baseScale = containerWidth / unscaledViewport.width;
-        if (!isFinite(baseScale) || baseScale <= 0) {
-          baseScale = 1.0;
-        }
-
-        const finalScale = baseScale * currentScale;
-        const viewport = page.getViewport({ scale: finalScale });
-
-        const outputScale = window.devicePixelRatio || 1;
-        canvas.width = viewport.width * outputScale;
-        canvas.height = viewport.height * outputScale;
-        canvas.style.width = viewport.width + "px";
-        canvas.style.height = viewport.height + "px";
-
-        const transform = outputScale !== 1
-          ? [outputScale, 0, 0, outputScale, 0, 0]
-          : null;
-
-        const renderContext = {
-          canvasContext: ctx,
-          viewport: viewport,
-          transform: transform
-        };
-
-        page.render(renderContext).promise.then(() => {
-          pageInfo.textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
-        });
-      });
-    }
-
-    pdfjsLib.getDocument(file).promise.then(pdf => {
-      pdfDoc = pdf;
-
-      // check if #page=N was passed
-      const hash = window.location.hash;
-      if (hash.startsWith("#page=")) {
-        const pageNum = parseInt(hash.replace("#page=", ""), 10);
-        if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= pdf.numPages) {
-          currentPage = pageNum;
-        }
-      }
-
-      renderPage(currentPage);
-    });
-
-    function zoomIn() {
-      currentScale *= 1.2;
-      renderPage(currentPage);
-    }
-
-    function zoomOut() {
-      currentScale /= 1.2;
-      renderPage(currentPage);
-    }
-
-    function resetZoom() {
-      currentScale = 1.0;
-      renderPage(currentPage);
-    }
-
-    function prevPage() {
-      if (currentPage <= 1) return;
-      currentPage--;
-      renderPage(currentPage);
-    }
-
-    function nextPage() {
-      if (currentPage >= pdfDoc.numPages) return;
-      currentPage++;
-      renderPage(currentPage);
-    }
-
-    window.addEventListener("resize", () => renderPage(currentPage));
-  </script>
-</body>
-</html>
+    const pageInfo = docume
