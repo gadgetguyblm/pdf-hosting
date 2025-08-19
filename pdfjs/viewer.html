@@ -2,21 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>PDF.js Simple Viewer</title>
+  <title>Simple PDF.js Viewer</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: #eee;
-      text-align: center;
-    }
-    #controls {
-      margin: 10px;
-    }
-    #the-canvas {
-      border: 1px solid #ccc;
-      margin-top: 10px;
-    }
+    body { margin: 0; background: #eee; text-align: center; }
+    #controls { margin: 10px; }
+    canvas { border: 1px solid black; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -32,20 +22,67 @@
   <!-- Load PDF.js -->
   <script src="../build/pdf.js"></script>
   <script>
-    // Tell PDF.js where to find the worker
+    // Configure worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = "../build/pdf.worker.js";
 
-    // Get PDF file from ?file= query string, or default
-    const urlParams = new URLSearchParams(window.location.search);
-    const pdfUrl = urlParams.get("file") || "https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf";
+    const url = "../2023-Trails-Book-Web-Version-reduced.pdf"; // 👈 adjust if needed
+    console.log("Attempting to load PDF:", url);
 
     let pdfDoc = null,
         pageNum = 1,
-        pageRendering = false,
-        pageNumPending = null,
         scale = 1.0,
         canvas = document.getElementById("the-canvas"),
         ctx = canvas.getContext("2d");
 
+    // Render page
     function renderPage(num) {
-      pageRendering = t
+      console.log("Rendering page:", num);
+      pdfDoc.getPage(num).then(function(page) {
+        const viewport = page.getViewport({ scale: scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+        page.render(renderContext).promise.then(function() {
+          console.log("Page rendered:", num);
+        });
+        document.getElementById("page_num").textContent = num;
+      }).catch(err => console.error("Error rendering page:", err));
+    }
+
+    // Load the PDF
+    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+      console.log("PDF loaded successfully:", url);
+      pdfDoc = pdfDoc_;
+      document.getElementById("page_count").textContent = pdfDoc.numPages;
+      renderPage(pageNum);
+    }).catch(function(err) {
+      console.error("Error loading PDF:", err);
+    });
+
+    // Button listeners
+    document.getElementById("prev").addEventListener("click", function() {
+      if (pageNum <= 1) return;
+      pageNum--;
+      renderPage(pageNum);
+    });
+    document.getElementById("next").addEventListener("click", function() {
+      if (pageNum >= pdfDoc.numPages) return;
+      pageNum++;
+      renderPage(pageNum);
+    });
+    document.getElementById("zoom_in").addEventListener("click", function() {
+      scale += 0.25;
+      renderPage(pageNum);
+    });
+    document.getElementById("zoom_out").addEventListener("click", function() {
+      if (scale <= 0.25) return;
+      scale -= 0.25;
+      renderPage(pageNum);
+    });
+  </script>
+</body>
+</html>
