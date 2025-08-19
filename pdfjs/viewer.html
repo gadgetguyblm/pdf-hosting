@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>PDF.js Viewer (Debug)</title>
-  <script src="https://gadgetguyblm.github.io/pdf-hosting/pdfjs/build/pdf.js"></script>
+  <title>PDF.js Viewer (Fixed Build Path)</title>
+  <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.js"></script>
   <style>
     body { margin:0; background:#333; color:white; font-family:sans-serif; text-align:center; }
     #controls { padding:10px; }
@@ -11,7 +11,7 @@
   </style>
 </head>
 <body>
-  <h2>PDF.js Debug Viewer</h2>
+  <h2>PDF.js Viewer</h2>
   <div id="controls">
     <button onclick="prevPage()">Prev</button>
     <button onclick="nextPage()">Next</button>
@@ -20,11 +20,11 @@
   <canvas id="pdf-canvas"></canvas>
 
   <script>
-    // ✅ Set worker
+    // ✅ Correct worker path
     pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://gadgetguyblm.github.io/pdf-hosting/pdfjs/build/pdf.worker.js";
+      "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.js";
 
-    // ✅ Your PDF file
+    // ✅ PDF file
     const file = "https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf";
 
     let pdfDoc = null, currentPage = 1;
@@ -49,4 +49,27 @@
       pdfDoc = pdf;
       console.log("✅ PDF loaded:", pdf.numPages, "pages");
 
-      const hash = window.lo
+      const hash = window.location.hash;
+      if (hash.startsWith("#page=")) {
+        const pageNum = parseInt(hash.replace("#page=", ""), 10);
+        if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= pdf.numPages) {
+          currentPage = pageNum;
+        }
+      }
+
+      renderPage(currentPage);
+    }).catch(err => console.error("❌ PDF load error:", err));
+
+    function prevPage() {
+      if (currentPage <= 1) return;
+      currentPage--;
+      renderPage(currentPage);
+    }
+    function nextPage() {
+      if (currentPage >= pdfDoc.numPages) return;
+      currentPage++;
+      renderPage(currentPage);
+    }
+  </script>
+</body>
+</html>
