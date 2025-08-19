@@ -1,3 +1,10 @@
+window.addEventListener("error", e => {
+  alert("JS Error: " + e.message);
+});
+window.addEventListener("unhandledrejection", e => {
+  alert("Promise Error: " + e.reason);
+});
+
 <!DOCTYPE html>
 <html>
 <head>
