@@ -1,54 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8"/>
-  <title>PDF.js Viewer (ESM)</title>
-  <link rel="stylesheet" href="viewer.css"/>
+  <title>PDF.js Minimal Viewer</title>
+  <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.mjs" type="module"></script>
   <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; }
-    #viewerContainer { height: 100%; width: 100%; }
+    body { margin:0; }
+    #pdf-canvas { width:100%; height:100vh; }
   </style>
 </head>
 <body>
-  <!-- Main PDF viewer container -->
-  <div id="viewerContainer">
-    <div id="viewer" class="pdfViewer"></div>
-  </div>
+  <canvas id="pdf-canvas"></canvas>
 
-  <!-- Load viewer logic via ES modules -->
   <script type="module">
-    import * as pdfjsLib from '../build/pdf.mjs';
-    import * as pdfjsViewer from './viewer.mjs';
+    import * as pdfjsLib from "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.mjs";
 
-    // Point worker to GitHub Pages absolute URL
+    // Point to worker
     pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.mjs';
+      "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.mjs";
 
-    // Get ?file= parameter or default to your Trails Book PDF
+    // Read ?file= parameter
     const urlParams = new URLSearchParams(window.location.search);
-    const pdfUrl = urlParams.get('file') ||
-      'https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf';
+    const file = urlParams.get("file") || "2023-Trails-Book-Web-Version-reduced.pdf";
 
-    // Set up viewer
-    const container = document.getElementById('viewerContainer');
-    const eventBus = new pdfjsViewer.EventBus();
-    const linkService = new pdfjsViewer.PDFLinkService({ eventBus });
-    const findController = new pdfjsViewer.PDFFindController({ eventBus, linkService });
+    // Read #page= parameter
+    const pageParam = window.location.hash.replace("#page=", "");
+    const pageNumber = parseInt(pageParam) || 1;
 
-    const viewer = new pdfjsViewer.PDFViewer({
-      container,
-      eventBus,
-      linkService,
-      findController
-    });
+    // Render
+    const canvas = document.getElementById("pdf-canvas");
+    const ctx = canvas.getContext("2d");
 
-    linkService.setViewer(viewer);
-
-    // Load the PDF
-    const loadingTask = pdfjsLib.getDocument(pdfUrl);
-    loadingTask.promise.then(pdfDocument => {
-      viewer.setDocument(pdfDocument);
-      linkService.setDocument(pdfDocument, null);
+    pdfjsLib.getDocument(file).promise.then(pdf => {
+      pdf.getPage(pageNumber).then(page => {
+        const viewport = page.getViewport({ scale: 1.5 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        page.render({ canvasContext: ctx, viewport: viewport });
+      });
     });
   </script>
 </body>
