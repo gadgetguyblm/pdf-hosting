@@ -2,53 +2,54 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>PDF.js Viewer (Fixed Build Path)</title>
+  <title>PDF.js Custom Viewer</title>
   <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.js"></script>
   <style>
-    body { margin:0; background:#333; color:white; font-family:sans-serif; text-align:center; }
-    #controls { padding:10px; }
-    canvas { background:white; display:block; margin:10px auto; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    body { margin:0; background:#222; color:white; font-family:sans-serif; text-align:center; }
+    #controls { padding:10px; background:#333; position:sticky; top:0; z-index:10; }
+    #controls button { margin:0 4px; padding:5px 10px; border:0; border-radius:4px; }
+    #pdf-canvas { background:white; display:block; margin:20px auto; box-shadow:0 2px 8px rgba(0,0,0,0.4); }
   </style>
 </head>
 <body>
-  <h2>PDF.js Viewer</h2>
   <div id="controls">
-    <button onclick="prevPage()">Prev</button>
-    <button onclick="nextPage()">Next</button>
+    <button onclick="prevPage()">⬅ Prev</button>
+    <button onclick="nextPage()">Next ➡</button>
+    <button onclick="zoomOut()">➖ Zoom Out</button>
+    <button onclick="zoomIn()">➕ Zoom In</button>
     <span id="page-info"></span>
   </div>
   <canvas id="pdf-canvas"></canvas>
 
   <script>
-    // ✅ Correct worker path
+    // ✅ Correct worker path (points to /build/)
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.js";
 
     // ✅ PDF file
     const file = "https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf";
 
-    let pdfDoc = null, currentPage = 1;
+    let pdfDoc = null, currentPage = 1, scale = 1.0;
     const canvas = document.getElementById("pdf-canvas");
     const ctx = canvas.getContext("2d");
     const pageInfo = document.getElementById("page-info");
 
     function renderPage(num) {
       pdfDoc.getPage(num).then(page => {
-        const viewport = page.getViewport({ scale: 1.0 });
+        const viewport = page.getViewport({ scale: scale });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
         page.render({ canvasContext: ctx, viewport }).promise.then(() => {
-          console.log(`Rendered page ${num}`);
-          pageInfo.textContent = `Page ${num} of ${pdfDoc.numPages}`;
-        }).catch(err => console.error("❌ Render error:", err));
-      }).catch(err => console.error("❌ getPage error:", err));
+          pageInfo.textContent = `Page ${num} of ${pdfDoc.numPages} (Zoom: ${Math.round(scale*100)}%)`;
+        });
+      });
     }
 
     pdfjsLib.getDocument(file).promise.then(pdf => {
       pdfDoc = pdf;
-      console.log("✅ PDF loaded:", pdf.numPages, "pages");
 
+      // Read hash like #page=5
       const hash = window.location.hash;
       if (hash.startsWith("#page=")) {
         const pageNum = parseInt(hash.replace("#page=", ""), 10);
@@ -58,18 +59,7 @@
       }
 
       renderPage(currentPage);
-    }).catch(err => console.error("❌ PDF load error:", err));
+    });
 
     function prevPage() {
-      if (currentPage <= 1) return;
-      currentPage--;
-      renderPage(currentPage);
-    }
-    function nextPage() {
-      if (currentPage >= pdfDoc.numPages) return;
-      currentPage++;
-      renderPage(currentPage);
-    }
-  </script>
-</body>
-</html>
+      if (currentPag
