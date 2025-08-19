@@ -19,9 +19,11 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.mjs";
 
-    // Read ?file= parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const file = urlParams.get("file") || "2023-Trails-Book-Web-Version-reduced.pdf";
+   // Read ?file= parameter
+const urlParams = new URLSearchParams(window.location.search);
+const fileParam = urlParams.get("file") || "2023-Trails-Book-Web-Version-reduced.pdf";
+const file = decodeURIComponent(fileParam);  // <-- important fix
+
 
     // Read #page= parameter
     const pageParam = window.location.hash.replace("#page=", "");
