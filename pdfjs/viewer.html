@@ -17,7 +17,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
     }
     #controls {
       margin: 8px;
@@ -49,6 +48,7 @@
 <body>
   <div id="controls">
     <button onclick="zoomOut()">-</button>
+    <button onclick="resetZoom()">Reset</button>
     <button onclick="zoomIn()">+</button>
   </div>
   <canvas id="pdf-canvas"></canvas>
@@ -64,10 +64,32 @@
     const ctx = canvas.getContext("2d");
 
     let pdfDoc = null;
-    let currentScale = 1.0; // will be set dynamically
-    let baseScale = 1.0;
+    let baseScale = 1.0;    // auto-fit scale
+    let currentScale = 1.0; // current zoom scale
 
-    // Render function
-    function renderPage(scale) {
+    function renderPage() {
       pdfDoc.getPage(pageNumber).then(page => {
-        const unscaledViewport
+        // Step 1: get natural PDF width
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+
+        // Step 2: compute base scale (fit to window width)
+        const containerWidth = window.innerWidth * 0.95;
+        baseScale = containerWidth / unscaledViewport.width;
+
+        // Step 3: apply current zoom relative to base
+        const viewport = page.getViewport({ scale: baseScale * currentScale });
+
+        // Step 4: handle high-DPI
+        const outputScale = window.devicePixelRatio || 1;
+        canvas.width = viewport.width * outputScale;
+        canvas.height = viewport.height * outputScale;
+        canvas.style.width = viewport.width + "px";
+        canvas.style.height = viewport.height + "px";
+
+        const transform = outputScale !== 1
+          ? [outputScale, 0, 0, outputScale, 0, 0]
+          : null;
+
+        // Step 5: render PDF
+        page.render({
+          canvasContext: ctx,
