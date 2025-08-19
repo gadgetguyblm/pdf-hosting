@@ -2,8 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>PDF.js Custom Viewer</title>
-  <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.js"></script>
+  <title>PDF.js Viewer</title>
   <style>
     body { margin:0; background:#222; color:white; font-family:sans-serif; text-align:center; }
     #controls { padding:10px; background:#333; position:sticky; top:0; z-index:10; }
@@ -21,12 +20,12 @@
   </div>
   <canvas id="pdf-canvas"></canvas>
 
+  <!-- ✅ Load regular JS build -->
+  <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.js"></script>
   <script>
-    // ✅ Correct worker path (points to /build/)
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.js";
 
-    // ✅ PDF file
     const file = "https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf";
 
     let pdfDoc = null, currentPage = 1, scale = 1.0;
@@ -36,7 +35,7 @@
 
     function renderPage(num) {
       pdfDoc.getPage(num).then(page => {
-        const viewport = page.getViewport({ scale: scale });
+        const viewport = page.getViewport({ scale });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
@@ -49,7 +48,7 @@
     pdfjsLib.getDocument(file).promise.then(pdf => {
       pdfDoc = pdf;
 
-      // Read hash like #page=5
+      // Support #page= in URL
       const hash = window.location.hash;
       if (hash.startsWith("#page=")) {
         const pageNum = parseInt(hash.replace("#page=", ""), 10);
@@ -61,5 +60,27 @@
       renderPage(currentPage);
     });
 
-    function prevPage() {
-      if (currentPag
+    window.prevPage = function() {
+      if (currentPage <= 1) return;
+      currentPage--;
+      renderPage(currentPage);
+    };
+
+    window.nextPage = function() {
+      if (currentPage >= pdfDoc.numPages) return;
+      currentPage++;
+      renderPage(currentPage);
+    };
+
+    window.zoomIn = function() {
+      scale *= 1.25;
+      renderPage(currentPage);
+    };
+
+    window.zoomOut = function() {
+      scale /= 1.25;
+      renderPage(currentPage);
+    };
+  </script>
+</body>
+</html>
