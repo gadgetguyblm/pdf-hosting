@@ -1,56 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>PDF.js Viewer</title>
+  <meta charset="utf-8">
+  <title>PDF.js Simple Viewer</title>
   <style>
-    body { margin: 0; font-family: sans-serif; text-align: center; background: #f0f0f0; }
-    #controls { margin: 10px; }
-    #pdf-canvas { border: 1px solid #aaa; background: white; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #eee;
+      text-align: center;
+    }
+    #controls {
+      margin: 10px;
+    }
+    #the-canvas {
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <div id="controls">
-    <button onclick="prevPage()">Previous</button>
+    <button id="prev">Previous</button>
     <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
-    <button onclick="nextPage()">Next</button>
-    <button onclick="zoomOut()">-</button>
-    <button onclick="zoomIn()">+</button>
+    <button id="next">Next</button>
+    <button id="zoom_out">-</button>
+    <button id="zoom_in">+</button>
   </div>
-  <canvas id="pdf-canvas"></canvas>
+  <canvas id="the-canvas"></canvas>
 
   <!-- Load PDF.js -->
   <script src="../build/pdf.js"></script>
   <script>
-    // Tell PDF.js where the worker is
+    // Tell PDF.js where to find the worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = "../build/pdf.worker.js";
 
-    // Absolute URL to your PDF file
-    const url = "https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf";
+    // Get PDF file from ?file= query string, or default
+    const urlParams = new URLSearchParams(window.location.search);
+    const pdfUrl = urlParams.get("file") || "https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf";
 
     let pdfDoc = null,
         pageNum = 1,
         pageRendering = false,
         pageNumPending = null,
         scale = 1.0,
-        canvas = document.getElementById('pdf-canvas'),
-        ctx = canvas.getContext('2d');
-
-    // Check if a page number is in the hash
-    const pageParam = parseInt(window.location.hash.replace("#page=", ""));
-    if (!isNaN(pageParam)) pageNum = pageParam;
+        canvas = document.getElementById("the-canvas"),
+        ctx = canvas.getContext("2d");
 
     function renderPage(num) {
-      pageRendering = true;
-      pdfDoc.getPage(num).then(function(page) {
-        const viewport = page.getViewport({ scale: scale });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        const renderContext = { canvasContext: ctx, viewport: viewport };
-        const renderTask = page.render(renderContext);
-
-        renderTask.promise.then(function () {
-          pageRendering = false;
-          document.getElementById('page_num').textContent = num;
-          if (pageNumPending !== null)
+      pageRendering = t
