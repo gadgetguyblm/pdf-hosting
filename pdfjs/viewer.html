@@ -5,24 +5,37 @@
   <title>PDF.js Simple Viewer</title>
   <script src="../build/pdf.js"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
-      height: 100vh;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background: #333;
+    }
+    body {
       display: flex;
       align-items: center;      /* vertical centering */
       justify-content: center;  /* horizontal centering */
-      background: #333;
+    }
+    #pdf-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
     }
     #pdf-canvas {
       display: block;
       background: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       border-radius: 4px;
+      margin: auto; /* fallback centering */
     }
   </style>
 </head>
 <body>
-  <canvas id="pdf-canvas"></canvas>
+  <div id="pdf-wrapper">
+    <canvas id="pdf-canvas"></canvas>
+  </div>
 
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = "../build/pdf.worker.js";
