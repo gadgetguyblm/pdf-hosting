@@ -1,37 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>PDF Viewer</title>
+  <meta charset="UTF-8">
+  <title>PDF.js Viewer</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; text-align: center; background: #f0f0f0; }
-    #toolbar { background: #333; color: white; padding: 8px; }
-    #toolbar button { margin: 0 4px; padding: 6px 10px; }
-    #page-info { margin-left: 10px; }
-    #pdf-canvas { display: block; margin: 20px auto; background: white; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+    body { margin: 0; font-family: sans-serif; text-align: center; background: #f0f0f0; }
+    #controls { margin: 10px; }
+    #pdf-canvas { border: 1px solid #aaa; background: white; }
   </style>
 </head>
 <body>
-  <div id="toolbar">
-    <button id="prev">Prev</button>
-    <button id="next">Next</button>
-    <span id="page-info">
-      Page <span id="page_num"></span> / <span id="page_count"></span>
-    </span>
-    <button id="zoomOut">-</button>
-    <button id="zoomIn">+</button>
+  <div id="controls">
+    <button onclick="prevPage()">Previous</button>
+    <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
+    <button onclick="nextPage()">Next</button>
+    <button onclick="zoomOut()">-</button>
+    <button onclick="zoomIn()">+</button>
   </div>
   <canvas id="pdf-canvas"></canvas>
 
   <!-- Load PDF.js -->
-  <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.js"></script>
+  <script src="../build/pdf.js"></script>
   <script>
-    // Point PDF.js at the worker file
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.js";
+    // Tell PDF.js where the worker is
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "../build/pdf.worker.js";
 
-    // PDF location
-    const url = "../2023-Trails-Book-Web-Version-reduced.pdf";
+    // Absolute URL to your PDF file
+    const url = "https://gadgetguyblm.github.io/pdf-hosting/2023-Trails-Book-Web-Version-reduced.pdf";
 
-    // Page parameter from hash
-    const pageParam = parseInt(window.location.hash.replace("#page=", "")) || 1;
+    let pdfDoc = null,
+        pageNum = 1,
+        pageRendering = false,
+        pageNumPending = null,
+        scale = 1.0,
+        canvas = document.getElementById('pdf-canvas'),
+        ctx = canvas.getContext('2d');
+
+    // Check if a page number is in the hash
+    const pageParam = parseInt(window.location.hash.replace("#page=", ""));
+    if (!isNaN(pageParam)) pageNum = pageParam;
+
+    function renderPage(num) {
+      pageRendering = true;
+      pdfDoc.getPage(num).then(function(page) {
+        const viewport = page.getViewport({ scale: scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = { canvasContext: ctx, viewport: viewport };
+        const renderTask = page.render(renderContext);
+
+        renderTask.promise.then(function () {
+          pageRendering = false;
+          document.getElementById('page_num').textContent = num;
+          if (pageNumPending !== null)
