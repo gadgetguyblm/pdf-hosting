@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>PDF.js Simple Viewer</title>
+  <title>PDF.js Auto-Fit Viewer</title>
   <script src="../build/pdf.js"></script>
   <style>
     html, body {
@@ -14,28 +14,22 @@
     }
     body {
       display: flex;
-      align-items: center;      /* vertical centering */
-      justify-content: center;  /* horizontal centering */
-    }
-    #pdf-wrapper {
-      display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
     }
     #pdf-canvas {
       display: block;
       background: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       border-radius: 4px;
-      margin: auto; /* fallback centering */
+      margin: auto;
+      max-width: 95%;   /* leave a little padding */
+      height: auto;
     }
   </style>
 </head>
 <body>
-  <div id="pdf-wrapper">
-    <canvas id="pdf-canvas"></canvas>
-  </div>
+  <canvas id="pdf-canvas"></canvas>
 
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = "../build/pdf.worker.js";
@@ -49,9 +43,16 @@
 
     pdfjsLib.getDocument(file).promise.then(pdf => {
       pdf.getPage(pageNumber).then(page => {
-        const scale = 1.0;
+        // Start with a scale of 1 to get the natural width
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+
+        // Compute a scale so the PDF fits ~95% of window width
+        const containerWidth = window.innerWidth * 0.95;
+        const scale = containerWidth / unscaledViewport.width;
+
         const viewport = page.getViewport({ scale });
 
+        // Handle retina/high DPI
         const outputScale = window.devicePixelRatio || 1;
 
         canvas.width = viewport.width * outputScale;
@@ -70,6 +71,9 @@
         });
       });
     });
+
+    // Re-render on window resize
+    window.addEventListener("resize", () => location.reload());
   </script>
 </body>
 </html>
