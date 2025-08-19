@@ -29,11 +29,24 @@
 
     pdfjsLib.getDocument(file).promise.then(pdf => {
       pdf.getPage(pageNumber).then(page => {
-        const viewport = page.getViewport({ scale: 1.5 });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        page.render({ canvasContext: ctx, viewport: viewport });
-      });
+       const scale = 2.5; // try between 2 and 3 for retina screens
+const viewport = page.getViewport({ scale });
+
+const outputScale = window.devicePixelRatio || 1;
+
+canvas.width = viewport.width * outputScale;
+canvas.height = viewport.height * outputScale;
+
+const transform = outputScale !== 1
+  ? [outputScale, 0, 0, outputScale, 0, 0]
+  : null;
+
+page.render({
+  canvasContext: ctx,
+  viewport: viewport,
+  transform: transform
+});
+
     });
   </script>
   window.addEventListener("error", function(e) {
