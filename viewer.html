@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PDF.js Minimal Viewer</title>
+  <script src="build/pdf.js"></script>
+  <style>
+    body { margin: 0; display: flex; justify-content: center; }
+    canvas { border: 1px solid black; }
+  </style>
+</head>
+<body>
+  <canvas id="the-canvas"></canvas>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const file = urlParams.get('file') || '2023-Trails-Book-Web-Version-reduced.pdf';
+    const pageParam = parseInt(window.location.hash.replace('#page=', '')) || 1;
+
+    const loadingTask = pdfjsLib.getDocument(file);
+    loadingTask.promise.then(function(pdf) {
+      pdf.getPage(pageParam).then(function(page) {
+        const scale = 1.0;
+        const viewport = page.getViewport({scale: scale});
+        const canvas = document.getElementById('the-canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = { canvasContext: context, viewport: viewport };
+        page.render(renderContext);
+      });
+    });
+  </script>
+</body>
+</html>
