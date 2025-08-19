@@ -1,10 +1,3 @@
-window.addEventListener("error", e => {
-  alert("JS Error: " + e.message);
-});
-window.addEventListener("unhandledrejection", e => {
-  alert("Promise Error: " + e.reason);
-});
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,32 +5,38 @@ window.addEventListener("unhandledrejection", e => {
   <title>PDF.js Simple Viewer</title>
   <script src="../build/pdf.js"></script>
   <style>
-    body { margin:0; background:#333; display:flex; justify-content:center; }
-    #pdf-canvas { display:block; background:#fff; margin:auto; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;      /* vertical centering */
+      justify-content: center;  /* horizontal centering */
+      background: #333;
+    }
+    #pdf-canvas {
+      display: block;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
   <canvas id="pdf-canvas"></canvas>
 
   <script>
-    // Tell PDF.js where the worker is
     pdfjsLib.GlobalWorkerOptions.workerSrc = "../build/pdf.worker.js";
 
-    // Hardcoded file path (relative to repo root)
     const file = "../2023-Trails-Book-Web-Version-reduced.pdf";
-
-    // Read page from hash (#page=5)
     const pageParam = window.location.hash.replace("#page=", "");
     const pageNumber = parseInt(pageParam) || 1;
 
     const canvas = document.getElementById("pdf-canvas");
     const ctx = canvas.getContext("2d");
 
-    // Load PDF
     pdfjsLib.getDocument(file).promise.then(pdf => {
       pdf.getPage(pageNumber).then(page => {
-        // Scale settings
-        const scale = 2.5; // try 2–3 for sharpness
+        const scale = 2.5;
         const viewport = page.getViewport({ scale });
 
         const outputScale = window.devicePixelRatio || 1;
@@ -57,9 +56,6 @@ window.addEventListener("unhandledrejection", e => {
           transform: transform
         });
       });
-    }).catch(err => {
-      console.error("PDF load error", err);
-      alert("Failed to load PDF: " + err.message);
     });
   </script>
 </body>
