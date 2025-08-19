@@ -5,8 +5,8 @@
   <title>PDF.js Simple Viewer</title>
   <script src="../build/pdf.js"></script>
   <style>
-    body { margin:0; }
-    #pdf-canvas { width:100%; height:100vh; }
+    body { margin:0; background:#333; display:flex; justify-content:center; }
+    #pdf-canvas { display:block; background:#fff; margin:auto; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
   </style>
 </head>
 <body>
@@ -16,43 +16,44 @@
     // Tell PDF.js where the worker is
     pdfjsLib.GlobalWorkerOptions.workerSrc = "../build/pdf.worker.js";
 
-    // Hardcode your PDF filename
+    // Hardcoded file path (relative to repo root)
     const file = "../2023-Trails-Book-Web-Version-reduced.pdf";
 
-    // Get #page= param
+    // Read page from hash (#page=5)
     const pageParam = window.location.hash.replace("#page=", "");
     const pageNumber = parseInt(pageParam) || 1;
 
-    // Load and render
     const canvas = document.getElementById("pdf-canvas");
     const ctx = canvas.getContext("2d");
 
+    // Load PDF
     pdfjsLib.getDocument(file).promise.then(pdf => {
       pdf.getPage(pageNumber).then(page => {
-       const scale = 2.5; // try between 2 and 3 for retina screens
-const viewport = page.getViewport({ scale });
+        // Scale settings
+        const scale = 2.5; // try 2–3 for sharpness
+        const viewport = page.getViewport({ scale });
 
-const outputScale = window.devicePixelRatio || 1;
+        const outputScale = window.devicePixelRatio || 1;
 
-canvas.width = viewport.width * outputScale;
-canvas.height = viewport.height * outputScale;
+        canvas.width = viewport.width * outputScale;
+        canvas.height = viewport.height * outputScale;
+        canvas.style.width = viewport.width + "px";
+        canvas.style.height = viewport.height + "px";
 
-const transform = outputScale !== 1
-  ? [outputScale, 0, 0, outputScale, 0, 0]
-  : null;
+        const transform = outputScale !== 1
+          ? [outputScale, 0, 0, outputScale, 0, 0]
+          : null;
 
-page.render({
-  canvasContext: ctx,
-  viewport: viewport,
-  transform: transform
-});
-
+        page.render({
+          canvasContext: ctx,
+          viewport: viewport,
+          transform: transform
+        });
+      });
+    }).catch(err => {
+      console.error("PDF load error", err);
+      alert("Failed to load PDF: " + err.message);
     });
   </script>
-  window.addEventListener("error", function(e) {
-  alert("Error: " + e.message);
-});
 </body>
 </html>
-
-
