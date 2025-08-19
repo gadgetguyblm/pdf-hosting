@@ -1,54 +1,37 @@
-<script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.js"></script>
-<script>
-  // Tell PDF.js where to find the worker
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PDF Viewer</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; text-align: center; background: #f0f0f0; }
+    #toolbar { background: #333; color: white; padding: 8px; }
+    #toolbar button { margin: 0 4px; padding: 6px 10px; }
+    #page-info { margin-left: 10px; }
+    #pdf-canvas { display: block; margin: 20px auto; background: white; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button id="prev">Prev</button>
+    <button id="next">Next</button>
+    <span id="page-info">
+      Page <span id="page_num"></span> / <span id="page_count"></span>
+    </span>
+    <button id="zoomOut">-</button>
+    <button id="zoomIn">+</button>
+  </div>
+  <canvas id="pdf-canvas"></canvas>
 
-  const url = "../2023-Trails-Book-Web-Version-reduced.pdf";
+  <!-- Load PDF.js -->
+  <script src="https://gadgetguyblm.github.io/pdf-hosting/build/pdf.js"></script>
+  <script>
+    // Point PDF.js at the worker file
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://gadgetguyblm.github.io/pdf-hosting/build/pdf.worker.js";
 
-  const pageParam = parseInt(window.location.hash.replace("#page=", "")) || 1;
+    // PDF location
+    const url = "../2023-Trails-Book-Web-Version-reduced.pdf";
 
-  let pdfDoc = null,
-      pageNum = pageParam,
-      scale = 1.0,
-      canvas = document.getElementById("pdf-canvas"),
-      ctx = canvas.getContext("2d");
-
-  function renderPage(num) {
-    pdfDoc.getPage(num).then(function(page) {
-      const viewport = page.getViewport({ scale });
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      page.render({ canvasContext: ctx, viewport }).promise.then(() => {
-        document.getElementById("page_num").textContent = num;
-      });
-    });
-  }
-
-  pdfjsLib.getDocument(url).promise.then(function(pdf) {
-    pdfDoc = pdf;
-    document.getElementById("page_count").textContent = pdf.numPages;
-    renderPage(pageNum);
-  });
-
-  // Controls
-  document.getElementById("prev").addEventListener("click", () => {
-    if (pageNum <= 1) return;
-    pageNum--; renderPage(pageNum);
-  });
-
-  document.getElementById("next").addEventListener("click", () => {
-    if (pageNum >= pdfDoc.numPages) return;
-    pageNum++; renderPage(pageNum);
-  });
-
-  document.getElementById("zoomIn").addEventListener("click", () => {
-    scale += 0.25; renderPage(pageNum);
-  });
-
-  document.getElementById("zoomOut").addEventListener("click", () => {
-    if (scale <= 0.25) return;
-    scale -= 0.25; renderPage(pageNum);
-  });
-</script>
+    // Page parameter from hash
+    const pageParam = parseInt(window.location.hash.replace("#page=", "")) || 1;
