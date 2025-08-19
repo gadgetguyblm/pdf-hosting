@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>PDF.js Auto-Fit Viewer with Zoom</title>
+  <title>PDF.js Viewer with Zoom + Page Nav</title>
   <script src="../build/pdf.js"></script>
   <style>
     html, body {
@@ -47,49 +47,10 @@
 </head>
 <body>
   <div id="controls">
+    <button onclick="prevPage()">Prev</button>
     <button onclick="zoomOut()">-</button>
     <button onclick="resetZoom()">Reset</button>
     <button onclick="zoomIn()">+</button>
-  </div>
-  <canvas id="pdf-canvas"></canvas>
-
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "../build/pdf.worker.js";
-
-    const file = "../2023-Trails-Book-Web-Version-reduced.pdf";
-    const pageParam = window.location.hash.replace("#page=", "");
-    const pageNumber = parseInt(pageParam) || 1;
-
-    const canvas = document.getElementById("pdf-canvas");
-    const ctx = canvas.getContext("2d");
-
-    let pdfDoc = null;
-    let baseScale = 1.0;    // auto-fit scale
-    let currentScale = 1.0; // current zoom scale
-
-    function renderPage() {
-      pdfDoc.getPage(pageNumber).then(page => {
-        // Step 1: get natural PDF width
-        const unscaledViewport = page.getViewport({ scale: 1.0 });
-
-        // Step 2: compute base scale (fit to window width)
-        const containerWidth = window.innerWidth * 0.95;
-        baseScale = containerWidth / unscaledViewport.width;
-
-        // Step 3: apply current zoom relative to base
-        const viewport = page.getViewport({ scale: baseScale * currentScale });
-
-        // Step 4: handle high-DPI
-        const outputScale = window.devicePixelRatio || 1;
-        canvas.width = viewport.width * outputScale;
-        canvas.height = viewport.height * outputScale;
-        canvas.style.width = viewport.width + "px";
-        canvas.style.height = viewport.height + "px";
-
-        const transform = outputScale !== 1
-          ? [outputScale, 0, 0, outputScale, 0, 0]
-          : null;
-
-        // Step 5: render PDF
-        page.render({
-          canvasContext: ctx,
+    <button onclick="nextPage()">Next</button>
+    <span id="page-info" style="color:white;margin-left:10px;"></span>
+  </
