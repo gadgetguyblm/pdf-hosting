@@ -3,10 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <title>PDF.js Viewer with Controls</title>
+
+    <!-- ✅ Mobile scaling fix -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+
     <script src="build/pdf.js"></script>
     <style>
-      body { margin: 0; background: #333; display: flex; flex-direction: column; align-items: center; color: white; }
-      #controls { margin: 10px; }
+      body {
+        margin: 0;
+        background: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: white;
+      }
+      #controls { margin: 10px; text-align: center; }
       button { margin: 0 5px; padding: 5px 10px; }
       canvas { border: 1px solid #ccc; margin: 10px; background: white; }
     </style>
@@ -33,14 +44,19 @@
 
       function renderPage(num) {
         pdfDoc.getPage(num).then(page => {
-          const viewport = page.getViewport({ scale: scale });
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
+          // ✅ Fit width to screen automatically
+          const viewport = page.getViewport({ scale: 1.0 });
+          const desiredWidth = window.innerWidth * 0.95; // leave small margin
+          scale = desiredWidth / viewport.width;
 
-          const renderContext = { canvasContext: ctx, viewport: viewport };
+          const scaledViewport = page.getViewport({ scale: scale });
+          canvas.height = scaledViewport.height;
+          canvas.width = scaledViewport.width;
+
+          const renderContext = { canvasContext: ctx, viewport: scaledViewport };
           page.render(renderContext);
 
-          document.getElementById('page-info').textContent = 
+          document.getElementById('page-info').textContent =
             `Page ${num} of ${pdfDoc.numPages}`;
         });
       }
@@ -72,6 +88,9 @@
         pdfDoc = pdf;
         renderPage(pageNum);
       });
+
+      // ✅ Re-render on device rotation / resize
+      window.addEventListener("resize", () => renderPage(pageNum));
     </script>
   </body>
 </html>
