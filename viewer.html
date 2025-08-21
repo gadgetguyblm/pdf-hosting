@@ -3,10 +3,6 @@
   <head>
     <meta charset="utf-8" />
     <title>PDF.js Viewer with Controls</title>
-
-    <!-- ✅ Mobile scaling fix -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-
     <script src="build/pdf.js"></script>
     <style>
       body {
@@ -17,9 +13,20 @@
         align-items: center;
         color: white;
       }
-      #controls { margin: 10px; text-align: center; }
-      button { margin: 0 5px; padding: 5px 10px; }
-      canvas { border: 1px solid #ccc; margin: 10px; background: white; }
+      #controls {
+        margin: 10px;
+      }
+      button {
+        margin: 0 5px;
+        padding: 5px 10px;
+      }
+      canvas {
+        border: 1px solid #ccc;
+        margin: 10px;
+        background: white;
+        max-width: 95vw;
+        height: auto;
+      }
     </style>
   </head>
   <body>
@@ -44,16 +51,29 @@
 
       function renderPage(num) {
         pdfDoc.getPage(num).then(page => {
-          // ✅ Fit width to screen automatically
+          // Start with a base viewport at scale=1
           const viewport = page.getViewport({ scale: 1.0 });
-          const desiredWidth = window.innerWidth * 0.95; // leave small margin
+
+          // Fit width to screen (95% of window width)
+          const desiredWidth = window.innerWidth * 0.95;
           scale = desiredWidth / viewport.width;
 
+          // Retina / high-DPI fix
+          const outputScale = window.devicePixelRatio || 1;
           const scaledViewport = page.getViewport({ scale: scale });
-          canvas.height = scaledViewport.height;
-          canvas.width = scaledViewport.width;
 
-          const renderContext = { canvasContext: ctx, viewport: scaledViewport };
+          canvas.width = scaledViewport.width * outputScale;
+          canvas.height = scaledViewport.height * outputScale;
+          canvas.style.width = scaledViewport.width + "px";
+          canvas.style.height = scaledViewport.height + "px";
+
+          const renderContext = {
+            canvasContext: ctx,
+            viewport: scaledViewport,
+            transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
+          };
+
+          ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
           page.render(renderContext);
 
           document.getElementById('page-info').textContent =
@@ -88,9 +108,6 @@
         pdfDoc = pdf;
         renderPage(pageNum);
       });
-
-      // ✅ Re-render on device rotation / resize
-      window.addEventListener("resize", () => renderPage(pageNum));
     </script>
   </body>
 </html>
