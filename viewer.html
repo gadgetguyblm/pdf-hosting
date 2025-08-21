@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>PDF.js Viewer with Controls</title>
+    <title>PDF.js Viewer (Mobile Swipe)</title>
     <script src="build/pdf.js"></script>
     <style>
       body {
@@ -12,13 +12,10 @@
         flex-direction: column;
         align-items: center;
         color: white;
+        overflow: hidden;
       }
-      #controls {
+      #page-info {
         margin: 10px;
-      }
-      button {
-        margin: 0 5px;
-        padding: 5px 10px;
       }
       canvas {
         border: 1px solid #ccc;
@@ -26,17 +23,12 @@
         background: white;
         max-width: 95vw;
         height: auto;
+        touch-action: none; /* prevent browser gestures interfering */
       }
     </style>
   </head>
   <body>
-    <div id="controls">
-      <button onclick="prevPage()">⬅ Prev</button>
-      <button onclick="nextPage()">Next ➡</button>
-      <button onclick="zoomOut()">➖ Zoom Out</button>
-      <button onclick="zoomIn()">➕ Zoom In</button>
-      <span id="page-info"></span>
-    </div>
+    <div id="page-info"></div>
     <canvas id="the-canvas"></canvas>
 
     <script>
@@ -45,35 +37,30 @@
       const url = '2023-Trails-Book-Web-Version-reduced.pdf';
       let pdfDoc = null,
           pageNum = parseInt(window.location.hash.replace("#page=", "")) || 1,
-          scale = 1.0,
           canvas = document.getElementById('the-canvas'),
           ctx = canvas.getContext('2d');
 
       function renderPage(num) {
         pdfDoc.getPage(num).then(page => {
-          // Start with a base viewport at scale=1
-          const viewport = page.getViewport({ scale: 1.0 });
-
-          // Fit width to screen (95% of window width)
+          const baseViewport = page.getViewport({ scale: 1.0 });
           const desiredWidth = window.innerWidth * 0.95;
-          scale = desiredWidth / viewport.width;
+          const scale = desiredWidth / baseViewport.width;
 
-          // Retina / high-DPI fix
           const outputScale = window.devicePixelRatio || 1;
-          const scaledViewport = page.getViewport({ scale: scale });
+          const viewport = page.getViewport({ scale: scale });
 
-          canvas.width = scaledViewport.width * outputScale;
-          canvas.height = scaledViewport.height * outputScale;
-          canvas.style.width = scaledViewport.width + "px";
-          canvas.style.height = scaledViewport.height + "px";
+          canvas.width = viewport.width * outputScale;
+          canvas.height = viewport.height * outputScale;
+          canvas.style.width = viewport.width + "px";
+          canvas.style.height = viewport.height + "px";
 
           const renderContext = {
             canvasContext: ctx,
-            viewport: scaledViewport,
+            viewport: viewport,
             transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null
           };
 
-          ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
           page.render(renderContext);
 
           document.getElementById('page-info').textContent =
@@ -93,16 +80,22 @@
         renderPage(pageNum);
       }
 
-      function zoomIn() {
-        scale += 0.2;
-        renderPage(pageNum);
-      }
-
-      function zoomOut() {
-        if (scale <= 0.4) return;
-        scale -= 0.2;
-        renderPage(pageNum);
-      }
+      // Touch gesture support (swipe left/right)
+      let touchStartX = 0;
+      canvas.addEventListener("touchstart", e => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+      canvas.addEventListener("touchend", e => {
+        const touchEndX = e.changedTouches[0].screenX;
+        const deltaX = touchEndX - touchStartX;
+        if (Math.abs(deltaX) > 50) { // threshold for swipe
+          if (deltaX > 0) {
+            prevPage(); // swipe right → previous page
+          } else {
+            nextPage(); // swipe left → next page
+          }
+        }
+      });
 
       pdfjsLib.getDocument(url).promise.then(pdf => {
         pdfDoc = pdf;
