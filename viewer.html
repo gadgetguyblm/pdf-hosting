@@ -13,9 +13,11 @@
         align-items: center;
         color: white;
         font-family: sans-serif;
+        height: 100vh;
       }
       #controls {
         margin: 10px;
+        flex-shrink: 0;
       }
       button {
         margin: 0 5px;
@@ -30,12 +32,13 @@
         background: #777;
       }
       #viewer-container {
-        overflow: auto;
         flex: 1;
+        width: 100%;
+        overflow: auto; /* allow scroll when zoomed */
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        width: 100%;
+        position: relative;
       }
       canvas {
         background: white;
@@ -54,6 +57,7 @@
         height: 40px;
         animation: spin 1s linear infinite;
         display: none;
+        z-index: 10;
       }
       @keyframes spin {
         0% { transform: translate(-50%, -50%) rotate(0deg); }
@@ -65,12 +69,13 @@
     <div id="controls">
       <button onclick="prevPage()">⬅ Prev</button>
       <button onclick="nextPage()">Next ➡</button>
+      <button onclick="fitToWidth()">📐 Fit to Screen</button>
       <span id="page-info"></span>
     </div>
     <div id="viewer-container">
       <canvas id="the-canvas"></canvas>
+      <div id="spinner"></div>
     </div>
-    <div id="spinner"></div>
 
     <script>
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'build/pdf.worker.js';
@@ -130,23 +135,35 @@
         renderPage(pageNum);
       }
 
+      function fitToWidth() {
+        pdfDoc.getPage(pageNum).then(p => {
+          const viewport = p.getViewport({ scale: 1 });
+          const desiredScale = container.clientWidth / viewport.width;
+          scale = desiredScale;
+          renderPage(pageNum);
+        });
+      }
+
       // Keyboard navigation
       document.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft') prevPage();
         if (e.key === 'ArrowRight') nextPage();
-        if (e.key === '+') { scale += 0.2; renderPage(pageNum); }
-        if (e.key === '-') { scale = Math.max(0.4, scale - 0.2); renderPage(pageNum); }
       });
 
       // Pinch-to-zoom & double-tap zoom
       let lastTouchDist = null;
       let lastTap = 0;
+      let touchStartX = 0, touchStartY = 0;
+
       container.addEventListener('touchstart', e => {
         if (e.touches.length === 2) {
           const dx = e.touches[0].pageX - e.touches[1].pageX;
           const dy = e.touches[0].pageY - e.touches[1].pageY;
           lastTouchDist = Math.sqrt(dx*dx + dy*dy);
         } else if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+
           const now = Date.now();
           if (now - lastTap < 300) { // double tap
             scale += 0.5;
@@ -169,9 +186,20 @@
         }
       });
 
+      container.addEventListener('touchend', e => {
+        if (e.changedTouches.length === 1) {
+          const dx = e.changedTouches[0].clientX - touchStartX;
+          const dy = e.changedTouches[0].clientY - touchStartY;
+          if (Math.abs(dx) > 50 && Math.abs(dy) < 50) {
+            if (dx > 0) prevPage(); else nextPage();
+          }
+        }
+      });
+
+      // Load PDF & fit first page automatically
       pdfjsLib.getDocument(url).promise.then(pdf => {
         pdfDoc = pdf;
-        renderPage(pageNum);
+        fitToWidth(); // 👈 auto-fit first page
       });
     </script>
   </body>
